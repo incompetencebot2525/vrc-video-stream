@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Random Google Drive Playlist</title>
+</head>
+<body style="background:black; margin:0;">
+  <video id="player" width="100%" height="100%" controls autoplay></video>
+
+  <script>
+    const API_KEY = "AIzaSyDck8To2A01hyzKev6NzxSjxhI4gHRxiN8";  // ← ここにGoogle APIキーを入力
+    const FOLDER_ID = "1cjzAhpceOj7vvzK1vJEIZhblx3Widyfn";      // ← ここにDriveのフォルダIDを入力
+
+    const player = document.getElementById("player");
+
+    async function fetchDriveVideos() {
+      const url = `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+mimeType='video/mp4'&key=${API_KEY}&fields=files(id,name)`;
+      const res = await fetch(url);
+      const data = await res.json();
+      return data.files.map(file => `https://drive.google.com/uc?export=download&id=${file.id}`);
+    }
+
+    async function startRandomPlayback() {
+      const videos = await fetchDriveVideos();
+      shuffleArray(videos);
+      let index = 0;
+
+      function playNext() {
+        if (index < videos.length) {
+          player.src = videos[index];
+          player.load();
+          player.play();
+          index++;
+        }
+      }
+
+      player.addEventListener("ended", playNext);
+      playNext();
+    }
+
+    // 配列シャッフル関数
+    function shuffleArray(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    startRandomPlayback();
+  </script>
+</body>
+</html>
