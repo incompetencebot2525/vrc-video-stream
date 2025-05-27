@@ -1,17 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>Random Google Drive Playlist</title>
 </head>
 <body style="background:black; margin:0;">
-  <video id="player" width="100%" height="100%" controls autoplay></video>
+  <video id="player" width="100%" height="100%" controls muted></video>
+  <button id="startBtn" style="position:absolute;top:10px;left:10px;z-index:100;">再生開始</button>
 
   <script>
-    const API_KEY = "AIzaSyDck8To2A01hyzKev6NzxSjxhI4gHRxiN8";  // ← ここにGoogle APIキーを入力
-    const FOLDER_ID = "1cjzAhpceOj7vvzK1vJEIZhblx3Widyfn";      // ← ここにDriveのフォルダIDを入力
-
+    const API_KEY = "AIzaSyDck8To2A01hyzKev6NzxSjxhI4gHRxiN8";
+    const FOLDER_ID = "1cjzAhpceOj7vvzK1vJEIZhblx3Widyfn";
     const player = document.getElementById("player");
+    const startBtn = document.getElementById("startBtn");
+    let videos = [];
+    let index = 0;
 
     async function fetchDriveVideos() {
       const url = `https://www.googleapis.com/drive/v3/files?q='${FOLDER_ID}'+in+parents+and+mimeType='video/mp4'&key=${API_KEY}&fields=files(id,name)`;
@@ -20,25 +23,6 @@
       return data.files.map(file => `https://drive.google.com/uc?export=download&id=${file.id}`);
     }
 
-    async function startRandomPlayback() {
-      const videos = await fetchDriveVideos();
-      shuffleArray(videos);
-      let index = 0;
-
-      function playNext() {
-        if (index < videos.length) {
-          player.src = videos[index];
-          player.load();
-          player.play();
-          index++;
-        }
-      }
-
-      player.addEventListener("ended", playNext);
-      playNext();
-    }
-
-    // 配列シャッフル関数
     function shuffleArray(array) {
       for (let i = array.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -46,7 +30,29 @@
       }
     }
 
-    startRandomPlayback();
+    function playNext() {
+      if (index >= videos.length) {
+        index = 0;
+        shuffleArray(videos);
+      }
+      player.src = videos[index];
+      player.load();
+      player.play();
+      index++;
+    }
+
+    async function startPlayback() {
+      videos = await fetchDriveVideos();
+      shuffleArray(videos);
+      playNext();
+      player.addEventListener("ended", playNext);
+      startBtn.style.display = "none";
+    }
+
+    // ユーザー操作があってから再生開始
+    startBtn.addEventListener("click", () => {
+      startPlayback();
+    });
   </script>
 </body>
 </html>
